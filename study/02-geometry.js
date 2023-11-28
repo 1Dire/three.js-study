@@ -1,5 +1,5 @@
 import * as THREE from "../build/three.module.js";
-import { OrbitControls } from "../examples/jsm/controls/OrbitControls.js"
+import { OrbitControls } from "../examples/jsm/controls/OrbitControls.js";
 class App {
   constructor() {
     const divContainer = document.querySelector("#webgl-container");
@@ -20,8 +20,8 @@ class App {
     this.resize();
     requestAnimationFrame(this.render.bind(this));
   }
-  _setControls(){
-    new OrbitControls(this._camera,this._divContainer); 
+  _setControls() {
+    new OrbitControls(this._camera, this._divContainer);
   }
   _setupCamera() {
     const width = this._divContainer.clientWidth;
