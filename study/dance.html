@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3d</title>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100vh;
+      "
+    >
+      <div id="glContainer" style="max-width: 950px; width: 100%">
+        <canvas id="glCanvas" style="width: 100%"></canvas>
+      </div>
+    </div>
+
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
+    ></script>
+    <script src="../examples/jsm//libs/ammo.wasm.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@v0.156.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@v0.156.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { MMDLoader } from "three/addons/loaders/MMDLoader.js";
+      import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
+      import { MMDParser } from "three/addons/libs/mmdparser.module.js";
+      import { MMDAnimationHelper } from "three/addons/animation/MMDAnimationHelper.js";
+      const clock = new THREE.Clock();
+      Ammo().then(function (AmmoLib) {
+        Ammo = AmmoLib;
+        main();
+        animate();
+      });
+      const canvas = document.getElementById("glCanvas");
+
+      let camera = {};
+      let controls = {};
+      let effect = {};
+      let light = {};
+      let mesh = {};
+      let renderer = {};
+      let scene = {};
+      let helper ={};
+      let canvasSizeW = parseInt(
+        window.getComputedStyle(document.getElementById("glContainer")).width
+      );
+      let canvasSizeH =
+        (parseInt(
+          window.getComputedStyle(document.getElementById("glContainer")).width
+        ) *
+          540) /
+        960;
+      function main() {
+        prepareScene();
+
+        loadMMD();
+
+        // render();
+
+        function prepareScene() {
+          renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            canvas: canvas,
+          });
+          renderer.outpuEncoding = THREE.sRGBEncoding;
+          // 기기 픽셀 비율 설정
+
+          renderer.setPixelRatio(window.devicePixelRatio);
+          // 캔버스 크기 설정
+          renderer.setSize(canvasSizeW, canvasSizeH);
+          // 배경색 설정
+          renderer.setClearColor(0xffffff, 1.0);
+          // 그림자 활성화
+
+          // 아웃라인 효과 생성
+          effect = new OutlineEffect(renderer);
+          // 씬 생성
+          scene = new THREE.Scene();
+          // 주변광 생성
+          scene.add(new THREE.AmbientLight(0xffffff, 3));
+          // Directional Light(직사광)을 생성합니다. 색상과 강도를 설정합니다.
+          light = new THREE.DirectionalLight(0xffd6a1, 1.2);
+
+          camera = new THREE.PerspectiveCamera(
+            22.9,
+            canvasSizeW / canvasSizeH,
+            0.1,
+            20
+          );
+          // OrbitControls(카메라 조작을 위한 컨트롤)을 생성합니다.
+          controls = new OrbitControls(camera, canvas);
+          // 지면에 사용할 재질을 정의합니다.
+        }
+
+        function loadMMD() {
+          function onProgress(xhr) {
+            if (xhr.lengthComputable) {
+              const percentComplete = (xhr.loaded / xhr.total) * 100;
+              console.log(Math.round(percentComplete, 2) + "% downloaded");
+            }
+          }
+          helper = new MMDAnimationHelper({
+            afterglow: 2.0,
+          });
+          const LOADER = new MMDLoader();
+          const modelFile = "../../model/Dire/Werewolf (Dire) - Fortnite.pmx";
+          const vmdFiles = ["../../model/dance/Motion-MMD.vmd"];
+          LOADER.loadWithAnimation(
+            modelFile,
+            vmdFiles,
+            function (mmd) {
+              // 로드된 모델을 mesh 변수에 할당합니다.
+              mesh = mmd.mesh;
+              mesh.material.forEach(function (element) {
+                element.emissive.multiplyScalar(0.1); //캐릭터 발광추가
+                element.userData.outlineParameters.thickness = 0.001;
+              });
+              // 그림자 투영을 활성화합니다.
+              mesh.castShadow = true;
+              // 그림자를 받도록 설정합니다.
+              mesh.receiveShadow = true;
+              // 모델의 크기를 조정합니다.
+              mesh.scale.copy(
+                new THREE.Vector3(1, 1, 1).multiplyScalar(0.0739)
+              );
+              // 모델의 boundingBox를 계산합니다.
+              const boundingBox = new THREE.Box3().setFromObject(mesh);
+              // 카메라의 위치를 설정합니다.
+              camera.position.copy(
+                new THREE.Vector3(0, 0.5 * boundingBox.max.y, 4.5)
+              );
+              // 카메라 컨트롤의 타겟을 설정합니다.
+              controls.target = new THREE.Vector3(
+                0,
+                0.5 * boundingBox.max.y,
+                0
+              );
+              // 라이트의 타겟의 위치를 설정합니다.
+              light.target.position.copy(
+                new THREE.Vector3(0, 0.5 * boundingBox.max.y, 0)
+              );
+              // 씬에 모델을 추가합니다.
+              scene.add(mesh);
+              helper.add(mesh, {
+                animation: mmd.animation,
+                physics: true,
+              });
+            },
+            onProgress,
+            null
+          );
+        }
+
+        // 창 크기가 변경될 때 캔버스 크기를 조정하는 이벤트 핸들러입니다.
+        window.addEventListener(
+          "resize",
+          function () {
+            canvasSizeW = parseInt(
+              window.getComputedStyle(document.getElementById("glContainer"))
+                .width
+            );
+            canvasSizeH =
+              (parseInt(
+                window.getComputedStyle(document.getElementById("glContainer"))
+                  .width
+              ) *
+                540) /
+              960;
+            // effect(렌더링 효과)의 크기를 조정합니다.
+            effect.setSize(canvasSizeW, canvasSizeH);
+          },
+          false
+        );
+      }
+      function animate() {
+        requestAnimationFrame(animate);
+
+        render();
+      }
+      function render() {
+        helper.update(clock.getDelta());
+        effect.render(scene, camera);
+      }
+    </script>
+  </body>
+</html>

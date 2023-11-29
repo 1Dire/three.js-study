@@ -73,79 +73,78 @@
             antialias: true,
             canvas: canvas,
           });
-          // 기기 픽셀 비율 설정
 
           renderer.setPixelRatio(window.devicePixelRatio);
-          // 캔버스 크기 설정
+
           renderer.setSize(canvasSizeW, canvasSizeH);
-          // 배경색 설정
+
           renderer.setClearColor(0xffffff, 1.0);
-          // 그림자 활성화
+
           renderer.shadowMap.enabled = true;
+
           renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-          // 아웃라인 효과 생성
+
           effect = new OutlineEffect(renderer);
-          // 씬 생성
+
           scene = new THREE.Scene();
-          // 주변광 생성
+
           scene.add(new THREE.AmbientLight(0xffffff, 1.8));
-          // Directional Light(직사광)을 생성합니다. 색상과 강도를 설정합니다.
+
           light = new THREE.DirectionalLight(0xffd6a1, 1.2);
-          // 그림자 투영을 활성화합니다.
+
           light.castShadow = true;
-          // 광원의 위치를 설정합니다.
+
           light.position.copy(new THREE.Vector3(2, 4.7, 2));
-          // 그림자 맵의 크기를 설정합니다. (2의 10승 x 2의 10승)
+
           light.shadow.mapSize.copy(new THREE.Vector2(2 ** 10, 2 ** 10));
-          // 그림자의 초점을 설정합니다.
+
           light.shadow.focus = 1;
-          // 그림자의 normal bias(노말 바이어스)를 설정합니다.
+
           light.shadow.normalBias = 0.02;
-          // 그림자의 바이어스를 설정합니다.
+
           light.shadow.bias = -0.0005;
-          // 그림자 카메라의 왼쪽 경계를 설정합니다.
+
           light.shadow.camera.left = -5;
-          // 그림자 카메라의 오른쪽 경계를 설정합니다.
+
           light.shadow.camera.right = 5;
-          // 그림자 카메라의 상단 경계를 설정합니다.
+
           light.shadow.camera.top = 5;
-          // 그림자 카메라의 하단 경계를 설정합니다.
+
           light.shadow.camera.bottom = -5;
-          // 그림자 카메라의 가까운 면을 설정합니다.
+
           light.shadow.camera.near = 0.1;
-          // 그림자 카메라의 먼 면을 설정합니다.
+
           light.shadow.camera.far = 20;
 
-          // Directional Light(직사광)을 씬에 추가합니다.
           scene.add(light);
-          // 라이트의 타겟을 씬에 추가합니다.
+
           scene.add(light.target);
-          // PerspectiveCamera(원근 카메라)를 생성합니다.
+
           camera = new THREE.PerspectiveCamera(
             22.9,
             canvasSizeW / canvasSizeH,
             0.1,
             20
           );
-          // OrbitControls(카메라 조작을 위한 컨트롤)을 생성합니다.
+
           controls = new OrbitControls(camera, canvas);
-          // 지면에 사용할 재질을 정의합니다.
+
           const groundMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ff00, // 원하는 색상으로 변경 가능
             opacity: 0.5, // 투명도 조절
             transparent: true, // 투명하게 설정
           });
-          // 지면 메쉬를 생성합니다.
+
           const groundMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(10, 10, 1, 1),
             groundMaterial
           );
-          // 지면 메쉬를 회전시킵니다.
+
           groundMesh.geometry.rotateX((-90 * Math.PI) / 180);
 
           groundMesh.receiveShadow = true;
           scene.add(groundMesh);
-          // 격자
+          // 격자 
           // scene.add(new THREE.GridHelper(8, 20, 0x000000, 0x999999));
           // 축
           // scene.add(new THREE.AxesHelper(4));
@@ -158,49 +157,47 @@
             "../model/dire/Werewolf (Dire) - Fortnite.pmx",
 
             function (mmd) {
-              // 로드된 모델을 mesh 변수에 할당합니다.
               mesh = mmd;
               mesh.material.forEach(function (element) {
-                element.emissive.multiplyScalar(0.1); //캐릭터 발광추가
+                element.emissive.multiplyScalar(0); //캐릭터 발광추가
                 element.userData.outlineParameters.thickness = 0.001;
               });
-              // 그림자 투영을 활성화합니다.
+
               mesh.castShadow = true;
-              // 그림자를 받도록 설정합니다.
+
               mesh.receiveShadow = true;
-              // 모델의 크기를 조정합니다.
+
               mesh.scale.copy(
                 new THREE.Vector3(1, 1, 1).multiplyScalar(0.0739)
               );
-              // 모델의 boundingBox를 계산합니다.
+
               const boundingBox = new THREE.Box3().setFromObject(mesh);
-              // 카메라의 위치를 설정합니다.
+
               camera.position.copy(
                 new THREE.Vector3(0, 0.5 * boundingBox.max.y, 4.5)
               );
-              // 카메라 컨트롤의 타겟을 설정합니다.
+
               controls.target = new THREE.Vector3(
                 0,
                 0.5 * boundingBox.max.y,
                 0
               );
-              // 라이트의 타겟의 위치를 설정합니다.
+
               light.target.position.copy(
                 new THREE.Vector3(0, 0.5 * boundingBox.max.y, 0)
               );
-              // 씬에 모델을 추가합니다.
+
               scene.add(mesh);
             }
           );
         }
 
         function render() {
-          // 씬을 렌더링합니다.
           effect.render(scene, camera);
-          // 다음 프레임을 요청합니다.
+
           window.requestAnimationFrame(render);
         }
-        // 창 크기가 변경될 때 캔버스 크기를 조정하는 이벤트 핸들러입니다.
+
         window.addEventListener(
           "resize",
           function () {
@@ -215,7 +212,7 @@
               ) *
                 540) /
               960;
-            // effect(렌더링 효과)의 크기를 조정합니다.
+
             effect.setSize(canvasSizeW, canvasSizeH);
           },
           false
