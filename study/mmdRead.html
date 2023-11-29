@@ -51,7 +51,6 @@
         let mesh = {};
         let renderer = {};
         let scene = {};
-
         let canvasSizeW = parseInt(
           window.getComputedStyle(document.getElementById("glContainer")).width
         );
@@ -130,21 +129,25 @@
 
           controls = new OrbitControls(camera, canvas);
 
+          const groundMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00, // 원하는 색상으로 변경 가능
+            opacity: 0.5, // 투명도 조절
+            transparent: true, // 투명하게 설정
+          });
+
           const groundMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(10, 10, 1, 1),
-            new THREE.ShadowMaterial({
-              opacity: 0.25,
-            })
+            groundMaterial
           );
 
           groundMesh.geometry.rotateX((-90 * Math.PI) / 180);
 
           groundMesh.receiveShadow = true;
           scene.add(groundMesh);
-
-          scene.add(new THREE.GridHelper(8, 20, 0x000000, 0x999999));
-
-          scene.add(new THREE.AxesHelper(4));
+          // 격자 
+          // scene.add(new THREE.GridHelper(8, 20, 0x000000, 0x999999));
+          // 축
+          // scene.add(new THREE.AxesHelper(4));
         }
 
         function loadMMD() {
@@ -156,8 +159,7 @@
             function (mmd) {
               mesh = mmd;
               mesh.material.forEach(function (element) {
-                element.emissive.multiplyScalar(0.3);
-
+                element.emissive.multiplyScalar(0); //캐릭터 발광추가
                 element.userData.outlineParameters.thickness = 0.001;
               });
 
